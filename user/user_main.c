@@ -9,62 +9,34 @@
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
 os_event_t    user_procTaskQueue[user_procTaskQueueLen];
-static void user_procTask(os_event_t *events);
+//first and only user process/task
+static void loop(os_event_t *events);
 
-static volatile os_timer_t some_timer;
 
 void user_rf_pre_init(void)
 {
     //nothing
 }
 
-void some_timerfunc(void *arg)
+void ICACHE_FLASH_ATTR user_init()
 {
-    //Do blinky stuff
-    if (GPIO_REG_READ(GPIO_OUT_ADDRESS) & BIT2)
-    {
-        //Set GPIO2 to LOW
-        gpio_output_set(0, BIT2, BIT2, 0);
-    }
-    else
-    {
-        //Set GPIO2 to HIGH
-        gpio_output_set(BIT2, 0, BIT2, 0);
-    }
-}
+    //init UART for debugging baud rate comes from user_config.h
+    uart_div_modify(0, UART_CLK_FREQ / BAUD_RATE);
+    os_printf("ESP8266 interrupt test");
 
-//Do nothing function
-static void ICACHE_FLASH_ATTR
-user_procTask(os_event_t *events)
-{
-    os_delay_us(10);
-}
-
-//Init function 
-void ICACHE_FLASH_ATTR
-user_init()
-{
-    // Initialize the GPIO subsystem.
     gpio_init();
 
-    //Set GPIO2 to output mode
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+    system_os_task(loop, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
+    system_os_post(user_procTaskPrio, 0, 0);
+}
 
-    //Set GPIO2 low
-    gpio_output_set(0, BIT2, BIT2, 0);
+static void ICACHE_FLASH_ATTR loop(os_event_t* events)
+{
+    os_printf("hello there!");
 
-    //Disarm timer
-    os_timer_disarm(&some_timer);
+    //at least some delay is crucial so the os has time to do its own thing
+    os_delay_us(100000);
 
-    //Setup timer
-    os_timer_setfn(&some_timer, (os_timer_func_t *)some_timerfunc, NULL);
-
-    //Arm the timer
-    //&some_timer is the pointer
-    //1000 is the fire time in ms
-    //0 for once and 1 for repeating
-    os_timer_arm(&some_timer, 1000, 1);
-    
-    //Start os task
-    system_os_task(user_procTask, user_procTaskPrio,user_procTaskQueue, user_procTaskQueueLen);
+    //this function will call itself to create a loop
+    system_os_post(user_procTaskPrio, 0, 0);
 }
