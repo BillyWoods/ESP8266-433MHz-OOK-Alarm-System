@@ -1,1 +1,1 @@
-#define BAUD_RATE 9600
+#define BAUD_RATE 115200 
