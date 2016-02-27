@@ -7,8 +7,6 @@
 #include "user_config.h"
 #include "wifi_config.h"
 
-#define TICKS_PER_SEC 1000000
-
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
 os_event_t    user_procTaskQueue[user_procTaskQueueLen];
@@ -27,7 +25,7 @@ void ICACHE_FLASH_ATTR user_init()
 {
     //init UART for debugging baud rate comes from user_config.h
     uart_div_modify(0, UART_CLK_FREQ / BAUD_RATE);
-    os_printf("ESP8266 interrupt test");
+    os_printf("\r\nESP8266 OOK decoding\r\n");
 
     gpio_init();
 
@@ -37,7 +35,6 @@ void ICACHE_FLASH_ATTR user_init()
 
     //let gpio 0 float
     PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO0_U);
-    //PIN_PULLDWN_DIS(PERIPHS_IO_MUX_GPIO0_U);
     //pull gpio 2 up
     PIN_PULLUP_EN(PERIPHS_IO_MUX_GPIO2_U);
 
@@ -68,8 +65,16 @@ void ICACHE_FLASH_ATTR user_init()
     system_os_post(user_procTaskPrio, 0, 0);
 }
 
-static uint32 lastIntrTime = 0;
-static bool thisIntrRise = 1;
+//used to calculate the width of a high pulse
+static uint32 lastPosEdgeTime = 0;
+//used to see how long there has been no signal for (useful for detecting the end of a packet)
+static uint32 lastNegEdgeTime = 0;
+//Are we interrupting on posedges or negedges?
+static bool thisIntrRise = true;
+
+uint32 packetBuffer = 0; //all packets with this alarm system are 24 bits long so fit nicely 
+char packetBuffHead = 0;
+
 LOCAL void interrupt_handler(int* arg)
 {
     //read the state of all gpio pins (GPIO_STATUS_ADDRESS = PIN_IN = 0x60000318 ... I think)
@@ -83,19 +88,55 @@ LOCAL void interrupt_handler(int* arg)
         //(*arg)++;
         if (thisIntrRise)
         {
-            lastIntrTime = system_get_time();
+            lastPosEdgeTime = system_get_time();
+
+            uint32 lowDuration = system_get_time() - lastNegEdgeTime;
+            //End of burst/packet
+            if (lowDuration > 5000 && lowDuration < 20000)
+            {
+                //clear packet buffer and send packet through if packet length is 24 bits
+                if (packetBuffHead > 10)
+                    os_printf("%x\r\n", packetBuffer);
+                packetBuffer = 0;
+                packetBuffHead = 0;
+            }
+            //end of transmission
+            else if (lowDuration >= 20000)
+            {
+                //clear packet buffer and send packet through if packet length is 24 bits
+                if (packetBuffHead > 5)
+                {
+                    os_printf("%x\r\n", packetBuffer);
+                    os_printf("\r\nend of transmission\r\n");
+                }
+                packetBuffer = 0;
+                packetBuffHead = 0;
+            }
         }
         else
         {
-            int pulseDuration = system_get_time() - lastIntrTime;
-            if (pulseDuration > 700 && pulseDuration < 1100)
-                os_printf("1");
-            else if (pulseDuration <= 310 && pulseDuration >= 190)
-                os_printf("0");
-            else if (pulseDuration > 1100)
-                os_printf("\r\n");
-                
-            lastIntrTime = system_get_time();
+            lastNegEdgeTime = system_get_time();
+
+            uint32 pulseDuration = system_get_time() - lastPosEdgeTime;
+            
+            //Being quite selective about pulse timings here
+            //A long pulse
+            if (pulseDuration > 690 && pulseDuration < 1100)
+            {
+                //write a 1
+                packetBuffer |= (1 << packetBuffHead++);
+            }
+            //A short pulse
+            else if (pulseDuration <= 320 && pulseDuration >= 180)
+            {
+                packetBuffHead++;
+            }
+            //discard packet (clear packet buffer)
+            else
+            {
+                packetBuffer = 0;
+                packetBuffHead = 0;
+            }
         }
         //clear interrupt status for GPIO0
         GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, BIT(0));
