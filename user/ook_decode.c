@@ -13,6 +13,11 @@ uint32 packet_pop(packetStack_s* ps)
         return -1;
 }
 
+bool packets_available(packetStack_s* ps)
+{
+    return ps->top >= 0;
+}
+
 void init_ook_decoder()
 {
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
@@ -41,7 +46,7 @@ void ook_intr_handler(uint32 intrMask, void* packets)
 {
     uint32 begintime = system_get_time();
 
-    //packetStack_s* ps = packets;
+    packetStack_s* ps = packets;
     //was it gpio 2 that triggered the interupt?
     if (intrMask & BIT(2))
     {
@@ -57,7 +62,8 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             {
                 //clear packet buffer and send packet through if packet length is 24 bits
                 if (packetBuffHead > 10)
-                    os_printf("%x\r\n", packetBuffer);
+                    //os_printf("%x\r\n", packetBuffer);
+                    packet_push(packetBuffer, ps);
                 packetBuffer = 0;
                 packetBuffHead = 0;
             }
@@ -66,7 +72,8 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             {
                 //clear packet buffer and send packet through if packet length is 24 bits
                 if (packetBuffHead > 10)
-                    os_printf("%x\r\n", packetBuffer);
+                    //os_printf("%x\r\n", packetBuffer);
+                    packet_push(packetBuffer, ps);
 
                 //os_printf("\r\nend of transmission\r\n");
                 packetBuffer = 0;

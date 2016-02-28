@@ -2,10 +2,10 @@
 #define OOK_SENSOR_IDS_H
 
 //change this according to the number of entries below
-static const int numSensors = 8;
+#define NUM_SENSORS 8
 
 //enter your own system's codes
-static const uint32 recognisedIDs[numSensors] = {
+const uint32 recognisedIDs[NUM_SENSORS] = {
     0x000000,
     0x000000,
     0x000000,
@@ -16,7 +16,7 @@ static const uint32 recognisedIDs[numSensors] = {
     0x000000
 };
 
-static const char* recognisedIDsLookup[numSensors] = {
+const char* recognisedIDsLookup[NUM_SENSORS] = {
     "garage door",
     "hallway PIR",
     "laundry door",
@@ -27,12 +27,15 @@ static const char* recognisedIDsLookup[numSensors] = {
     "arm alarm"
 };
 
-char* ook_ID_to_name(uint32 code)
+const char* ook_ID_to_name(uint32 code)
 {
-    for (int i = 0; i<numSensors; i++)
+    int i;
+    for (i = 0; i<NUM_SENSORS; i++)
     {
         if(code == recognisedIDs[i])
-            return recognisedIDsLookup[i];
+        {
+            return (recognisedIDsLookup[i]);
+        }
     }
 }
 

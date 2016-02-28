@@ -7,7 +7,7 @@
 #include "os_type.h"
 #include "user_interface.h"
 
-typedef struct packetStack
+typedef volatile struct packetStack
 {
     uint32 packets[50];
     int top; 
@@ -15,6 +15,7 @@ typedef struct packetStack
 
 void packet_push(uint32 packet, packetStack_s* ps);
 uint32 packet_pop(packetStack_s* ps);
+bool packets_available(packetStack_s* ps);
 
 //setup interrupts and gpio 2 as input
 void init_ook_decoder();

@@ -6,6 +6,7 @@
 
 #include "user_config.h"
 #include "wifi_config.h"
+#include "ook_sensor_IDs.h"
 #include "ook_decode.h"
 
 /* definition to expand macro then apply to pragma message */
@@ -24,7 +25,7 @@ os_event_t    user_procTaskQueue[user_procTaskQueueLen];
 //first and only user process/task
 static void loop(os_event_t *events);
 
-packetStack_s unprocessedPackets = { .top = -1 };
+packetStack_s unprocessedPackets;// = { .top = -1 };
 
 void user_rf_pre_init(void)
 {
@@ -42,19 +43,25 @@ void ICACHE_FLASH_ATTR user_init()
 
     gpio_init();
     init_ook_decoder();
-    gpio_intr_handler_register(ook_intr_handler, &unprocessedPackets);
+    gpio_intr_handler_register(ook_intr_handler, (struct packetStack*) &unprocessedPackets);
 
+    unprocessedPackets.top = -1;
 }
 
 
 static bool level = 0;
 static void ICACHE_FLASH_ATTR loop(os_event_t* events)
 {
-    //os_printf("interrupts: %d\r\n", interruptArg);
-    //os_printf("RTC: %d\r\n", system_get_time());
-    
-    //level = !(level);
-    //GPIO_OUTPUT_SET(GPIO_ID_PIN(2), level);
+    while(packets_available(&unprocessedPackets))
+    {
+        uint32 packet = packet_pop(&unprocessedPackets);
+        char source[40];
+        strcpy(source, ook_ID_to_name(packet));
+        if (source != NULL)
+            os_printf("%x: %s\r\n", packet, source);
+    }
+    os_printf("%d\r\n", unprocessedPackets.top);
+
     //at least some delay is crucial so the os has time to do its own thing
     os_delay_us(500000);
 
