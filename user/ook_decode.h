@@ -9,7 +9,7 @@
 
 typedef volatile struct packetStack
 {
-    uint32 packets[50];
+    uint32 packets[256];
     int top; 
 } packetStack_s;
 

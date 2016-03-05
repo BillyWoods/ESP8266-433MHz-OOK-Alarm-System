@@ -2,13 +2,17 @@
 
 void packet_push(uint32 packet, packetStack_s* ps)
 {
-    ps->packets[++(ps->top)] = packet;
+    ps->top++;
+    ps->packets[ps->top] = packet;
 }
 
 uint32 packet_pop(packetStack_s* ps)
 {
-    if (ps->top >= 0)
-        return ps->packets[(ps->top)--];
+    if (packets_available(ps))
+    {
+        ps->top--;
+        return ps->packets[ps->top + 1];
+    }
     else
         return -1;
 }
@@ -62,8 +66,10 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             {
                 //clear packet buffer and send packet through if packet length is 24 bits
                 if (packetBuffHead > 10)
-                    //os_printf("%x\r\n", packetBuffer);
+                {
+                    os_printf("%x\r\n", packetBuffer);
                     packet_push(packetBuffer, ps);
+                }
                 packetBuffer = 0;
                 packetBuffHead = 0;
             }
@@ -72,8 +78,10 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             {
                 //clear packet buffer and send packet through if packet length is 24 bits
                 if (packetBuffHead > 10)
-                    //os_printf("%x\r\n", packetBuffer);
+                {
+                    os_printf("%x\r\n", packetBuffer);
                     packet_push(packetBuffer, ps);
+                }
 
                 //os_printf("\r\nend of transmission\r\n");
                 packetBuffer = 0;

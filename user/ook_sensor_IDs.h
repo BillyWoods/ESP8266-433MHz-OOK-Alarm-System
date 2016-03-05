@@ -37,6 +37,7 @@ const char* ook_ID_to_name(uint32 code)
             return (recognisedIDsLookup[i]);
         }
     }
+    return NULL;
 }
 
 #endif
