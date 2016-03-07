@@ -9,15 +9,16 @@
 #include "wifi_config.h"
 #include "ook_sensor_IDs.h"
 #include "ook_decode.h"
+//#include "webserver.h"
 
 /* definition to expand macro then apply to pragma message */
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
 #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
 
-#pragma message(VAR_NAME_VALUE(BIT(2)))
-#pragma message(VAR_NAME_VALUE(GPIO_ID_PIN(2)))
-#pragma message(VAR_NAME_VALUE(GPIO_PIN_ADDR(2)))
+#pragma message(VAR_NAME_VALUE(STATION_WRONG_PASSWORD))
+#pragma message(VAR_NAME_VALUE(STATION_NO_AP_FOUND))
+#pragma message(VAR_NAME_VALUE(STATION_CONNECT_FAIL))
 #pragma message(VAR_NAME_VALUE(LOCAL))
 
 #define user_procTaskPrio        0
@@ -39,9 +40,14 @@ void ICACHE_FLASH_ATTR user_init()
     uart_div_modify(0, UART_CLK_FREQ / BAUD_RATE);
     os_printf("\r\nESP8266 OOK decoding\r\n");
 
+    //setup loop callback in system task queue
     system_os_task(loop, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
     system_os_post(user_procTaskPrio, 0, 0);
 
+    //init wifi using creds in wifi_config.h. Put your own creds in the file, inside " "s
+    //connect_wifi(WIFI_SSID, WIFI_PSK);
+
+    //init stuff for the ook decoder
     gpio_init();
     init_ook_decoder();
     gpio_intr_handler_register(ook_intr_handler, (void*) &unprocessedPackets);
@@ -51,15 +57,16 @@ void ICACHE_FLASH_ATTR user_init()
 static bool level = 0;
 static void ICACHE_FLASH_ATTR loop(os_event_t* events)
 {
-    os_printf("%d\r\n", unprocessedPackets.top);
+    //os_printf("wifi up: %s\r\n", is_wifi_connected()? "yes" : "no");
+    //os_printf("%d\r\n", wifi_station_get_connect_status());
+    
     while(packets_available(&unprocessedPackets))
     {
         uint32* packet = (uint32*) os_malloc(sizeof(uint32)); 
         *packet = packet_pop(&unprocessedPackets);
         
-        os_printf("p: %x\r\n", *packet);
         char source[40];
-        ets_strcpy(source, ook_ID_to_name(*packet));
+        os_strcpy(source, ook_ID_to_name(*packet));
         if (source != NULL)
             os_printf("    |>%s\r\n", source);
         
