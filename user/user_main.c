@@ -44,17 +44,21 @@ void ICACHE_FLASH_ATTR user_init()
     system_os_task(loop, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
     system_os_post(user_procTaskPrio, 0, 0);
 
-    //init wifi using creds in wifi_config.h. Put your own creds in the file, inside " "s
+    //init wifi using creds in wifi_config.h. Put your own creds in the file
+    wifi_station_set_auto_connect(0);
     //connect_wifi(WIFI_SSID, WIFI_PSK);
 
     //init stuff for the ook decoder
     gpio_init();
-    init_ook_decoder();
     gpio_intr_handler_register(ook_intr_handler, (void*) &unprocessedPackets);
+    init_ook_decoder();
+
+    os_printf("init finished!");
 }
 
 
-static bool level = 0;
+//static bool level = 0;
+
 static void ICACHE_FLASH_ATTR loop(os_event_t* events)
 {
     //os_printf("wifi up: %s\r\n", is_wifi_connected()? "yes" : "no");
@@ -66,7 +70,7 @@ static void ICACHE_FLASH_ATTR loop(os_event_t* events)
         *packet = packet_pop(&unprocessedPackets);
         
         char source[40];
-        os_strcpy(source, ook_ID_to_name(*packet));
+        ets_strcpy(source, ook_ID_to_name(*packet));
         if (source != NULL)
             os_printf("    |>%s\r\n", source);
         
@@ -74,7 +78,6 @@ static void ICACHE_FLASH_ATTR loop(os_event_t* events)
     }
 
     //at least some delay is crucial so the os has time to do its own thing
-    os_delay_us(500000);
     os_delay_us(500000);
 
     //this function will call itself to create a loop
