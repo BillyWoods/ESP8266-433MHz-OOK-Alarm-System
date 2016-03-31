@@ -40,7 +40,7 @@ variables related to the operation of decoding on interrupt
 static uint32 lastPosEdgeTime = 0;
 //used to see how long there has been no signal for (useful for detecting the end of a packet)
 static uint32 lastNegEdgeTime = 0;
-//Are we interrupting on posedges or negedges?
+//Are we interrupting on posedges or negedges at present?
 static bool thisIntrRise = true;
 
 static uint32 packetBuffer = 0; //all packets with this alarm system are 24 bits long so fit nicely 
@@ -54,7 +54,6 @@ void ook_intr_handler(uint32 intrMask, void* packets)
     //was it gpio 2 that triggered the interupt?
     if (intrMask & BIT(2))
     {
-        //os_printf("writing at: %d\r\npacket: %x\r\n", packetBuffHead, packetBuffer);
         if (thisIntrRise)
         {
             lastPosEdgeTime = system_get_time();
@@ -67,7 +66,6 @@ void ook_intr_handler(uint32 intrMask, void* packets)
                 //clear packet buffer and send packet through if packet length is 24 bits
                 if (packetBuffHead > 10)
                 {
-                    os_printf("%x\r\n", packetBuffer);
                     packet_push(packetBuffer, ps);
                 }
                 packetBuffer = 0;
@@ -79,7 +77,6 @@ void ook_intr_handler(uint32 intrMask, void* packets)
                 //clear packet buffer and send packet through if packet length is 24 bits
                 if (packetBuffHead > 10)
                 {
-                    os_printf("%x\r\n", packetBuffer);
                     packet_push(packetBuffer, ps);
                 }
 
