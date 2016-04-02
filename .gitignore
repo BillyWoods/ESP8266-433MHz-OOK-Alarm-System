@@ -1,3 +1,5 @@
 user/wifi_config.h
 user/ook_sensor_IDs.h
+build/*
+firmware/*
 *.swp

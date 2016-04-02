@@ -1,5 +1,3 @@
-//#include <stdlib.h>
-
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
@@ -30,8 +28,10 @@ os_event_t    user_procTaskQueue[user_procTaskQueueLen];
 static void loop(os_event_t *events);
 
 packetStack_s unprocessedPackets = { .top = -1 };
+
 int triggeredSensorsIter = 0;
 char** triggeredSensors;
+void clearTriggeredSensors();
 
 // all the inbuilt string copiers struggle if a null char pointer
 // is passed to them so here's a safer version
@@ -66,14 +66,15 @@ void ICACHE_FLASH_ATTR user_init()
 
     //init webserver
     init_web_server();
+    triggeredSensors = (char**) os_zalloc(NUM_SENSORS * sizeof(char*));
+    attach_btn_clear(clearTriggeredSensors);
 
     //init stuff for the ook decoder
     gpio_init();
     gpio_intr_handler_register(ook_intr_handler, (void*) &unprocessedPackets);
     init_ook_decoder();
-    triggeredSensors = (char**) os_zalloc(NUM_SENSORS * sizeof(char*));
 
-    os_printf("init finished!");
+    os_printf("init finished!\r\n");
 }
 
 
@@ -82,12 +83,14 @@ void ICACHE_FLASH_ATTR user_init()
 // is handed to webserver.c
 char generatedWebpage[500];
 
+// called when the "clear" button is pressed on webpage
 void clearTriggeredSensors()
 {
     int i;
     for(i = 0; i<triggeredSensorsIter; i++)
         os_free(triggeredSensors[i]);
     triggeredSensorsIter = 0;
+    set_webpage(NULL);
 }
 
 void updateWebpage()
@@ -95,17 +98,16 @@ void updateWebpage()
     int i;
     char* temp = "<title>ESP8266 Home Monitor</title>\n<b>Triggered Sensors:</b><br><ol>\n";
 
-    for (i = triggeredSensorsIter - 1; i >= 0; i--)
+    for (i = 0; i < triggeredSensorsIter; i++)
     {
-        //generatedWebpage = appendStr(generatedWebpage, sprintf("",triggeredSensors[i]));
         os_sprintf(generatedWebpage, "%s<li>%s</li>\n", temp, triggeredSensors[i]);
         temp = generatedWebpage;
     }
 
+    // the clear button
     os_sprintf(generatedWebpage, 
-        "%s</ol>\n<form method=\"post\"><input type=\"submit\" value=\"Clear\"></form>", 
+        "%s</ol>\n<form action=\"clear\"><input type=\"submit\" value=\"Clear\"></form>", 
         temp);
-    os_printf("%d\r\n", triggeredSensorsIter);
     set_webpage(generatedWebpage);
 }
 
@@ -149,7 +151,7 @@ static void ICACHE_FLASH_ATTR loop(os_event_t* events)
     
 
     //at least some delay is crucial so the os has time to do its own thing
-    os_delay_us(100000);
+    os_delay_us(500000);
 
     //this function will call itself to create a loop
     system_os_post(user_procTaskPrio, 0, 0);

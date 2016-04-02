@@ -31,44 +31,142 @@ void ICACHE_FLASH_ATTR init_web_server()
 
     // register our handler to handle tcp traffic on port 80
     espconn_regist_connectcb(HTTPServer, server_handle_new_conn);
+
     // timeout
     espconn_regist_time(HTTPServer, 15, 0);
     espconn_accept(HTTPServer);
 }
 
+
 char* webpageToServe = NULL;
+char* responseHeader =
+    "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n";
 char* defaultWebpage =
-    "<b>Nothing to see here</b><br>Default webpage";
+    "<title>ESP8266 Home Monitor</title>Nothing to report at present";
 
 void ICACHE_FLASH_ATTR set_webpage(char* html)
 {
     webpageToServe = html;
 }
 
-void ICACHE_FLASH_ATTR server_handle_new_conn(void* arg)
+
+button_pressed_cb on_clear_pressed;
+
+void ICACHE_FLASH_ATTR attach_btn_clear(button_pressed_cb onClearFunc)
 {
-    struct espconn* conn = (struct espconn*) arg;
+    on_clear_pressed = onClearFunc;
+}
+
+void ICACHE_FLASH_ATTR send_404(struct espconn* sendTo)
+{
+    char* responseHeader = 
+        "HTTP/1.1 404 Not found\r\nConnection: close\r\n\r\n";
+    espconn_send(sendTo, (uint8*) responseHeader, strlen(responseHeader));
+}
+
+void ICACHE_FLASH_ATTR send_redirect_main_webpage(struct espconn* sendTo)
+{
+    char* responseHeader = 
+        "HTTP/1.1 307 Redirect\r\nLocation: /\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<html>Refreshing...</html>\r\n";
+    espconn_send(sendTo, (uint8*) responseHeader, strlen(responseHeader));
+}
+
+void ICACHE_FLASH_ATTR send_main_webpage(struct espconn* sendTo)
+{
     char* htmlData;
     size_t dataLen;
-    espconn_regist_recvcb(conn, server_handle_recv_data);
     
-    // assume it was a GET request and serve some data
     if(webpageToServe != NULL)
     {
-        dataLen = strlen(webpageToServe);
-        htmlData = webpageToServe;
+        dataLen = strlen(webpageToServe) + strlen(responseHeader);
+        htmlData = (char*) os_malloc((dataLen + 1) * sizeof(char));
+        os_sprintf(htmlData, "%s%s", responseHeader, webpageToServe);
     }
     else
     {
-        dataLen = strlen(defaultWebpage);
-        htmlData = defaultWebpage;
+        dataLen = strlen(defaultWebpage) + strlen(responseHeader);
+        htmlData = (char*) os_malloc((dataLen + 1) * sizeof(char));
+        os_sprintf(htmlData, "%s%s", responseHeader, defaultWebpage);
     }
-    espconn_send(conn, (uint8*) htmlData, dataLen);
+    espconn_send(sendTo, (uint8*) htmlData, dataLen);
 }
 
+void ICACHE_FLASH_ATTR server_handle_new_conn(void* arg)
+{
+    // attach receive callback to handle this new connection
+    espconn_regist_recvcb((struct espconn*) arg, server_handle_recv_data);
+}
+
+// will return a nullptr if no url found, will return pointer
+// to a '\0' if url found is simply "/", i.e. root
+char* get_requested_url(char* received, size_t receivedLen)
+{
+    // look for a GET
+    int i, j;
+    const char* find = "GET /";
+    size_t findLen = strlen(find);
+    int urlEndPos;
+    char* retVal = NULL;
+
+    for (i = 0; i <= receivedLen - findLen; i++)
+    {
+        bool match = true;
+
+        for (j = 0; j < findLen; j++)
+        {
+            match = find[j] == received[j + i];
+        }
+        if (match)
+        {
+            // read from next char along from match 
+            // until space or null terminator encountered
+            for (urlEndPos = i + findLen;
+                received[urlEndPos] != ' ' && received[urlEndPos] != '\0'; 
+                urlEndPos++)
+            { /*no actions needed*/ }
+            size_t urlLen = urlEndPos - (i + findLen);
+            // the combined zero and malloc of memory 1 byte longer
+            // than string copied in will work as null terminator
+            retVal = (char*) os_zalloc((urlLen + 1) * sizeof(char));
+            if (urlLen > 0)
+                os_memcpy(retVal, (received+i+findLen), urlLen);
+            
+            break;
+        }
+    }
+    return retVal;
+}
 
 void ICACHE_FLASH_ATTR server_handle_recv_data(void* arg, char* recvData, unsigned short len)
 {
     struct espconn* conn = (struct espconn*) arg;
-    os_printf("sent to this device:\r\n%s", recvData);
+    char* url = get_requested_url(recvData, len);
+
+    // handle different url requests
+    
+    if (url == NULL)
+    { /* do nothing because no valid GET request was sent*/}
+
+    // clear button pressed action
+    else if (strcmp(url, "clear?") == 0)
+    {
+        on_clear_pressed();
+        send_redirect_main_webpage(conn);
+    }
+    
+    // main webpage
+    else if (*url == '\0')
+    {
+        send_main_webpage(conn);
+    }
+
+    else
+    {
+        send_404(conn);
+    }
+    
+    // close the connection so browser doesn't hang on "loading"
+    espconn_disconnect(conn);
+
+    os_free(url);
 }
