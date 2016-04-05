@@ -1,2 +1,3 @@
 A program for the ESP8266 which lets it read from a 433mhz OOK (on-off keying) 
-radio receiver.
+radio receiver. This has been extended to have the ESP8266 recognise sensors 
+from the ID they broadcast and serve a webpage showing which have been detected.
