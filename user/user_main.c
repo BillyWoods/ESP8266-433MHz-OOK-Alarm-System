@@ -11,30 +11,36 @@
 #include "ook_decode.h"
 #include "webserver.h"
 
-/* definition to expand macro then apply to pragma message */
+// define a macro which will expand defined constants
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
 #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
 
-#pragma message(VAR_NAME_VALUE(STATION_WRONG_PASSWORD))
-#pragma message(VAR_NAME_VALUE(STATION_NO_AP_FOUND))
-#pragma message(VAR_NAME_VALUE(STATION_CONNECT_FAIL))
-#pragma message(VAR_NAME_VALUE(LOCAL))
+//#pragma message(VAR_NAME_VALUE(LOCAL))
 
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
 os_event_t    user_procTaskQueue[user_procTaskQueueLen];
-//first and only user process/task
+// first and only user process/task
 static void loop(os_event_t *events);
 
 packetStack_s unprocessedPackets = { .top = -1 };
 
+/*
+    for keeping track (by name) of which sensors have been
+    triggered with no duplicate entries, the iter keeps track 
+    of the last element
+*/
 int triggeredSensorsIter = 0;
-char** triggeredSensors;
+char* triggeredSensors[NUM_SENSORS];
 void clearTriggeredSensors();
 
-// all the inbuilt string copiers struggle if a null char pointer
-// is passed to them so here's a safer version
+/* 
+    all the inbuilt string copiers struggle if a null pointer 
+    is passed to them so here's a safer version, but the dangerous 
+    part is having to manually free the memory it allocates when 
+    done with it
+*/
 char* my_strdup(const char* in)
 {
     if (in == NULL)
@@ -53,23 +59,22 @@ void user_rf_pre_init(void)
 
 void ICACHE_FLASH_ATTR user_init()
 {
-    //init UART for debugging baud rate comes from user_config.h
+    // init UART for debugging baud rate comes from user_config.h
     uart_div_modify(0, UART_CLK_FREQ / BAUD_RATE);
     os_printf("\r\nESP8266 OOK decoding\r\n");
 
-    //setup loop callback in system task queue
+    // setup loop callback in system task queue
     system_os_task(loop, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
     system_os_post(user_procTaskPrio, 0, 0);
 
-    //init wifi using creds in wifi_config.h. Put your own creds in the file
+    // init wifi using creds in wifi_config.h. Put your own creds in the file
     connect_wifi(WIFI_SSID, WIFI_PSK);
 
-    //init webserver
+    // webserver-related initialisation
     init_web_server();
-    triggeredSensors = (char**) os_zalloc(NUM_SENSORS * sizeof(char*));
     attach_btn_clear(clearTriggeredSensors);
 
-    //init stuff for the ook decoder
+    // init stuff for the ook decoder
     gpio_init();
     gpio_intr_handler_register(ook_intr_handler, (void*) &unprocessedPackets);
     init_ook_decoder();
@@ -80,7 +85,7 @@ void ICACHE_FLASH_ATTR user_init()
 
 
 // needs global declaration for persistence as this pointer
-// is handed to webserver.c
+// is handed to webserver.c so shoulddn't be cleared at any point
 char generatedWebpage[500];
 
 // called when the "clear" button is pressed on webpage
@@ -118,11 +123,9 @@ static void ICACHE_FLASH_ATTR loop(os_event_t* events)
     // triggered sensors
     while(packets_available(&unprocessedPackets))
     {
-        uint32* packet = (uint32*) os_malloc(sizeof(uint32)); 
-        *packet = packet_pop(&unprocessedPackets);
-        char* source = my_strdup(ook_ID_to_name(*packet));
+        uint32 packet = packet_pop(&unprocessedPackets); 
+        char* source = my_strdup(ook_ID_to_name(packet));
         bool newTriggering = true;
-        os_free(packet);
 
         if (source != NULL)
         {
