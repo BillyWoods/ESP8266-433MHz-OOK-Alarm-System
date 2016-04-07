@@ -63,7 +63,7 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             //End of burst/packet
             if (lowDuration > 7000 && lowDuration < 20000)
             {
-                //clear packet buffer and send packet through if packet length is 24 bits
+                //clear packet buffer and send packet through if packet length is long enough to not simply be noise
                 if (packetBuffHead > 10)
                 {
                     packet_push(packetBuffer, ps);
@@ -74,7 +74,7 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             //end of transmission
             else if (lowDuration >= 20000)
             {
-                //clear packet buffer and send packet through if packet length is 24 bits
+                //clear packet buffer and send packet through if packet length is long enough to not simply be noise
                 if (packetBuffHead > 10)
                 {
                     packet_push(packetBuffer, ps);
@@ -91,7 +91,9 @@ void ook_intr_handler(uint32 intrMask, void* packets)
 
             uint32 pulseDuration = lastNegEdgeTime - lastPosEdgeTime;
             
-            //Being quite selective about pulse timings here
+            // Being quite specific about pulse timings here, so this will not necessarily decode other 
+            // transmitters without adjustements
+            
             //A long pulse
             if (pulseDuration > 690 && pulseDuration < 1100)
             {
@@ -103,7 +105,7 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             {
                 packetBuffHead++;
             }
-            //discard packet (clear packet buffer)
+            // discard packet because it is indecipherable or noise
             else
             {
                 packetBuffer = 0;
