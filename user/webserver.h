@@ -1,8 +1,6 @@
 #ifndef WEBSERVER_H
 #define WEBSERVER_H
 
-#include <stdlib.h>
-
 #include "ets_sys.h"
 #include "osapi.h"
 #include "os_type.h"

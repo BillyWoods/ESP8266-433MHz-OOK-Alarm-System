@@ -123,9 +123,13 @@ static void ICACHE_FLASH_ATTR loop(os_event_t* events)
     // triggered sensors
     while(packets_available(&unprocessedPackets))
     {
-        uint32 packet = packet_pop(&unprocessedPackets); 
+        uint32 packet = packet_pop(&unprocessedPackets);
         char* source = my_strdup(ook_ID_to_name(packet));
         bool newTriggering = true;
+
+#ifdef PRINT_OOK_PACKETS_DEBUG
+        os_printf("%x\r\n", packet);
+#endif
 
         if (source != NULL)
         {
