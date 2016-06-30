@@ -24,12 +24,13 @@ bool packets_available(packetStack_s* ps)
 
 void init_ook_decoder()
 {
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
-    PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO2_U);
-    //set gpio 2 as input
-    GPIO_DIS_OUTPUT(GPIO_ID_PIN(2));
+    // use pin 4 as gpio
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
+    PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO4_U);
+    //set gpio 4 as input
+    GPIO_DIS_OUTPUT(GPIO_ID_PIN(4));
     //interrupt on rising edges
-    gpio_pin_intr_state_set(GPIO_ID_PIN(2), GPIO_PIN_INTR_POSEDGE);
+    gpio_pin_intr_state_set(GPIO_ID_PIN(4), GPIO_PIN_INTR_POSEDGE);
 }
 
 
@@ -51,8 +52,8 @@ void ook_intr_handler(uint32 intrMask, void* packets)
     uint32 begintime = system_get_time();
 
     packetStack_s* ps = packets;
-    //was it gpio 2 that triggered the interupt?
-    if (intrMask & BIT(2))
+    //was it gpio 4 that triggered the interupt?
+    if (intrMask & BIT(4))
     {
         if (thisIntrRise)
         {
@@ -63,7 +64,7 @@ void ook_intr_handler(uint32 intrMask, void* packets)
             //End of burst/packet
             if (lowDuration > 7000 && lowDuration < 20000)
             {
-                //clear packet buffer and send packet through if packet length is long enough to not simply be noise
+                //clear packet buffer and send packet4 through if packet length is long enough to not simply be noise
                 if (packetBuffHead > 10)
                 {
                     packet_push(packetBuffer, ps);
@@ -112,11 +113,11 @@ void ook_intr_handler(uint32 intrMask, void* packets)
                 packetBuffHead = 0;
             }
         }
-        // Reactivate interrupts for GPIO0
+        // Reactivate interrupts for GPIO 4
         int edgeTrig = thisIntrRise ? GPIO_PIN_INTR_NEGEDGE : GPIO_PIN_INTR_POSEDGE; 
         //update record of next interrupt's type
         thisIntrRise = !thisIntrRise;
-        gpio_intr_ack(BIT(2));
-        gpio_pin_intr_state_set(GPIO_ID_PIN(2), edgeTrig);
+        gpio_intr_ack(BIT(4));
+        gpio_pin_intr_state_set(GPIO_ID_PIN(4), edgeTrig);
     }
 }
