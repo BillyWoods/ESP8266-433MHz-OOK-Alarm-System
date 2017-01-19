@@ -25,12 +25,12 @@ bool packets_available(packetStack_s* ps)
 void init_ook_decoder()
 {
     // use pin 4 as gpio
-    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
-    PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO4_U);
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U, FUNC_GPIO14);
+    PIN_PULLUP_DIS(PERIPHS_IO_MUX_MTMS_U);
     //set gpio 4 as input
-    GPIO_DIS_OUTPUT(GPIO_ID_PIN(4));
+    GPIO_DIS_OUTPUT(GPIO_ID_PIN(14));
     //interrupt on rising edges
-    gpio_pin_intr_state_set(GPIO_ID_PIN(4), GPIO_PIN_INTR_POSEDGE);
+    gpio_pin_intr_state_set(GPIO_ID_PIN(14), GPIO_PIN_INTR_POSEDGE);
 }
 
 
@@ -53,7 +53,7 @@ void ook_intr_handler(uint32 intrMask, void* packets)
 
     packetStack_s* ps = packets;
     //was it gpio 4 that triggered the interupt?
-    if (intrMask & BIT(4))
+    if (intrMask & BIT(14))
     {
         if (thisIntrRise)
         {
@@ -117,7 +117,7 @@ void ook_intr_handler(uint32 intrMask, void* packets)
         int edgeTrig = thisIntrRise ? GPIO_PIN_INTR_NEGEDGE : GPIO_PIN_INTR_POSEDGE; 
         //update record of next interrupt's type
         thisIntrRise = !thisIntrRise;
-        gpio_intr_ack(BIT(4));
-        gpio_pin_intr_state_set(GPIO_ID_PIN(4), edgeTrig);
+        gpio_intr_ack(BIT(14));
+        gpio_pin_intr_state_set(GPIO_ID_PIN(14), edgeTrig);
     }
 }

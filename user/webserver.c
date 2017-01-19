@@ -144,11 +144,15 @@ void ICACHE_FLASH_ATTR server_handle_recv_data(void* arg, char* recvData, unsign
 
     // handle different url requests
     
+    // invalid GET request sent
     if (url == NULL)
-    { /* do nothing because no valid GET request was sent*/}
-
+    { 
+        send_404(conn);
+    }
     // clear button pressed action
-    else if (strcmp(url, "clear?") == 0)
+    else if ( strcmp(url, "clear?") == 0 ||
+              strcmp(url, "clear") == 0 ||
+              strcmp(url, "clear/") == 0 )
     {
         on_clear_pressed();
         send_redirect_main_webpage(conn);

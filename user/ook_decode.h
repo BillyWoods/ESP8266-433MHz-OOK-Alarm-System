@@ -17,7 +17,7 @@ void packet_push(uint32 packet, packetStack_s* ps);
 uint32 packet_pop(packetStack_s* ps);
 bool packets_available(packetStack_s* ps);
 
-//setup interrupts and gpio 2 as input
+//setup interrupts and gpio 14 as input
 void init_ook_decoder();
 void ook_intr_handler(uint32 intrMask, void* packets);
 
