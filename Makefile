@@ -18,14 +18,14 @@ BUILD_BASE	= build
 FW_BASE		= firmware
 
 # base directory for the compiler
-XTENSA_TOOLS_ROOT ?= /opt/Espressif/xtensa-lx106-elf/bin
+XTENSA_TOOLS_ROOT ?= /home/billy/esp8266/esp-open-sdk/xtensa-lx106-elf/bin
  
 
 # base directory of the ESP8266 SDK package, absolute
-SDK_BASE	?= /opt/Espressif/sdk
+SDK_BASE	?= /home/billy/esp8266/esp-open-sdk/sdk
 
 # esptool.py path and port
-ESPTOOL		?= /opt/Espressif/esptool/esptool.py
+ESPTOOL		?= /home/billy/esp8266/esp-open-sdk/xtensa-lx106-elf/bin/esptool.py
 ESPPORT		?= /dev/ttyUSB0
 
 # name for the target project
@@ -55,7 +55,7 @@ SDK_INCDIR	= include include/json
 # we create two different files for uploading into the flash
 # these are the names and options to generate them
 FW_FILE_1_ADDR	= 0x00000
-FW_FILE_2_ADDR	= 0x40000
+FW_FILE_2_ADDR	= 0x10000
 
 # select which tools to use as compiler, librarian and linker
 CC		:= $(XTENSA_TOOLS_ROOT)/xtensa-lx106-elf-gcc

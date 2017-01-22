@@ -10,6 +10,7 @@
 #include "ook_sensor_IDs.h"
 #include "ook_decode.h"
 #include "webserver.h"
+#include "email.h"
 
 // define a macro which will expand defined constants
 #define VALUE_TO_STRING(x) #x
@@ -73,6 +74,9 @@ void ICACHE_FLASH_ATTR user_init()
     // webserver-related initialisation
     init_web_server();
     attach_btn_clear(clearTriggeredSensors);
+
+    // email-related stuff
+    init_email();
 
     // init stuff for the ook decoder
     gpio_init();

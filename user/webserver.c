@@ -157,7 +157,12 @@ void ICACHE_FLASH_ATTR server_handle_recv_data(void* arg, char* recvData, unsign
         on_clear_pressed();
         send_redirect_main_webpage(conn);
     }
-    
+    // temporary for testing email
+    else if ( strcmp(url, "email_test") == 0)
+    {
+        os_printf("email debug page accessed\n");
+        email_debug_func();
+    }
     // main webpage
     else if (*url == '\0')
     {
