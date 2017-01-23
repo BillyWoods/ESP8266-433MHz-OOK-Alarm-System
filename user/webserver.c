@@ -162,6 +162,7 @@ void ICACHE_FLASH_ATTR server_handle_recv_data(void* arg, char* recvData, unsign
     {
         os_printf("email debug page accessed\n");
         email_debug_func();
+        send_redirect_main_webpage(conn);
     }
     // main webpage
     else if (*url == '\0')
