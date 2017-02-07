@@ -19,9 +19,6 @@
 
 //#pragma message(VAR_NAME_VALUE(LOCAL))
 
-#define user_procTaskPrio       0
-#define user_procTaskQueueLen   2 
-os_event_t    user_procTaskQueue[user_procTaskQueueLen];
 // first and only user process/task
 static void loop(os_event_t *events);
 
