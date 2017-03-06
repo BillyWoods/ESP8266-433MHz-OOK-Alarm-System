@@ -61,6 +61,9 @@ void ICACHE_FLASH_ATTR user_init()
     uart_div_modify(0, UART_CLK_FREQ / BAUD_RATE);
     os_printf("\r\nESP8266 OOK decoding\r\n");
 
+    // speed boost (hopefully)
+    system_update_cpu_freq(160);
+
     // setup loop callback in system task queue
     system_os_task(loop, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
     system_os_post(user_procTaskPrio, 0, 0);
@@ -160,6 +163,9 @@ static void ICACHE_FLASH_ATTR loop(os_event_t* events)
 
     //at least some delay is crucial so the os has time to do its own thing
     os_delay_us(500000);
+
+    //check free memory (for debugging)
+    os_printf("free mem: %d\r\n", system_get_free_heap_size());
 
     //this function will call itself to create a loop
     system_os_post(user_procTaskPrio, 0, 0);
