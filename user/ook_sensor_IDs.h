@@ -3,6 +3,8 @@
 
 //change this according to the number of entries below
 #define NUM_SENSORS 8
+#define ARM_CODE 0x123abc
+#define DISARM_CODE 0x456def
 
 //enter your own system's codes
 const uint32 recognisedIDs[NUM_SENSORS] = {
@@ -12,8 +14,8 @@ const uint32 recognisedIDs[NUM_SENSORS] = {
     0x000000,
     0x000000,
     0x000000,
-    0x000000,
-    0x000000
+    DISARM_CODE,
+    ARM_CODE 
 };
 
 const char* recognisedIDsLookup[NUM_SENSORS] = {

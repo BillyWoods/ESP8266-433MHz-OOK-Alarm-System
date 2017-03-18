@@ -5,6 +5,9 @@
 
 #define BAUD_RATE 115200 
 #define TIMEZONE 11
+// 60 seconds from trigerring to email being sent ( allows
+//   time for alarm to be disarmed)
+#define ALERT_EMAIL_DELAY 60
 
 #define user_procTaskPrio       0
 #define ssl_disconnectPrio      1
@@ -17,4 +20,5 @@ os_event_t user_procTaskQueue[user_procTaskQueueLen];
     the IDs of your sensors 
 */
 //#define PRINT_OOK_PACKETS_DEBUG
+#define PRINT_EMAIL_DEBUG
 #endif

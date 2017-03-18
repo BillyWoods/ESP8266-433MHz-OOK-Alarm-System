@@ -39,9 +39,9 @@ void ICACHE_FLASH_ATTR init_web_server()
 
 
 char* webpageToServe = NULL;
-char* responseHeader =
+const char* responseHeader =
     "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n";
-char* defaultWebpage =
+const char* defaultWebpage =
     "<title>ESP8266 Home Monitor</title>Nothing to report at present";
 
 void ICACHE_FLASH_ATTR set_webpage(char* html)
@@ -49,43 +49,55 @@ void ICACHE_FLASH_ATTR set_webpage(char* html)
     webpageToServe = html;
 }
 
-
+/*
+    allow us to register our own callbacks for when the 'clear', 'arm', and 'disarm' buttons
+      are pressed on the main webpage
+*/
 button_pressed_cb on_clear_pressed;
-
 void ICACHE_FLASH_ATTR attach_btn_clear(button_pressed_cb onClearFunc)
 {
     on_clear_pressed = onClearFunc;
 }
+button_pressed_cb on_arm_alarm_pressed;
+
+void ICACHE_FLASH_ATTR attach_btn_arm_alarm(button_pressed_cb armAlarmFunc)
+{
+    on_arm_alarm_pressed = armAlarmFunc;
+}
+
+button_pressed_cb on_disarm_alarm_pressed;
+void ICACHE_FLASH_ATTR attach_btn_disarm_alarm(button_pressed_cb disarmAlarmFunc)
+{
+    on_disarm_alarm_pressed= disarmAlarmFunc;
+}
 
 void ICACHE_FLASH_ATTR send_404(struct espconn* sendTo)
 {
-    char* responseHeader = 
+    const char* notFoundResponseHeader = 
         "HTTP/1.1 404 Not found\r\nConnection: close\r\n\r\n";
-    espconn_send(sendTo, (uint8*) responseHeader, strlen(responseHeader));
+    espconn_send(sendTo, (uint8*) notFoundResponseHeader, strlen(notFoundResponseHeader));
 }
 
 void ICACHE_FLASH_ATTR send_redirect_main_webpage(struct espconn* sendTo)
 {
-    char* responseHeader = 
+    const char* redirectResponseHeader = 
         "HTTP/1.1 307 Redirect\r\nLocation: /\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n<html>Refreshing...</html>\r\n";
-    espconn_send(sendTo, (uint8*) responseHeader, strlen(responseHeader));
+    espconn_send(sendTo, (uint8*) redirectResponseHeader, strlen(redirectResponseHeader));
 }
 
 void ICACHE_FLASH_ATTR send_main_webpage(struct espconn* sendTo)
 {
-    char* htmlData;
+    static char htmlData[WEBPAGE_SIZE];
     size_t dataLen;
     
     if(webpageToServe != NULL)
     {
         dataLen = strlen(webpageToServe) + strlen(responseHeader);
-        htmlData = (char*) os_malloc((dataLen + 1) * sizeof(char));
         os_sprintf(htmlData, "%s%s", responseHeader, webpageToServe);
     }
     else
     {
         dataLen = strlen(defaultWebpage) + strlen(responseHeader);
-        htmlData = (char*) os_malloc((dataLen + 1) * sizeof(char));
         os_sprintf(htmlData, "%s%s", responseHeader, defaultWebpage);
     }
     espconn_send(sendTo, (uint8*) htmlData, dataLen);
@@ -155,6 +167,22 @@ void ICACHE_FLASH_ATTR server_handle_recv_data(void* arg, char* recvData, unsign
               strcmp(url, "clear/") == 0 )
     {
         on_clear_pressed();
+        send_redirect_main_webpage(conn);
+    }
+    // arm alarm button pressed action
+    else if ( strcmp(url, "arm?") == 0 ||
+              strcmp(url, "arm") == 0 ||
+              strcmp(url, "arm/") == 0 )
+    {
+        on_arm_alarm_pressed();
+        send_redirect_main_webpage(conn);
+    }
+    // disarm alarm button pressed action
+    else if ( strcmp(url, "disarm?") == 0 ||
+              strcmp(url, "disarm") == 0 ||
+              strcmp(url, "disarm/") == 0 )
+    {
+        on_disarm_alarm_pressed();
         send_redirect_main_webpage(conn);
     }
     // temporary for testing email
