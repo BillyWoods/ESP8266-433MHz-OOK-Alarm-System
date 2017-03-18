@@ -1,8 +1,3 @@
-/*
-    TODO:
-        add a proper email body
-        key fob arm/disarm
-*/
 #include "ets_sys.h"
 #include "osapi.h"
 #include "gpio.h"
@@ -75,7 +70,8 @@ void ICACHE_FLASH_ATTR user_init()
     os_printf("\r\nESP8266 OOK decoding\r\n");
 
     // speed boost (hopefully)
-    system_update_cpu_freq(160);
+    //system_update_cpu_freq(160);
+    system_update_cpu_freq(80);
 
     // setup loop callback in system task queue
     system_os_task(loop, user_procTaskPrio, user_procTaskQueue, user_procTaskQueueLen);
