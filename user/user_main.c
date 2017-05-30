@@ -17,8 +17,9 @@
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
 #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
-
 //#pragma message(VAR_NAME_VALUE(LOCAL))
+
+//#define PRINT_EMAIL_DEBUG
 
 // first and only user process/task
 static void loop(os_event_t *events);
@@ -87,12 +88,12 @@ void ICACHE_FLASH_ATTR user_init()
     sntp_setservername(1, "time-c.nist.gov");
     sntp_set_timezone(TIMEZONE);
     sntp_init();
-}
 
-bool initFinished = false;
-void ICACHE_FLASH_ATTR user_init2()
-{
-    
+    // init stuff for the ook decoder
+    gpio_init();
+    gpio_intr_handler_register(ook_intr_handler, (void*) &unprocessedPackets);
+    init_ook_decoder();
+
     // webserver-related initialisation
     init_web_server();
     attach_btn_clear(clearTriggeredSensors);
@@ -100,17 +101,15 @@ void ICACHE_FLASH_ATTR user_init2()
     attach_btn_disarm_alarm(disarm_alarm);
     // update so we don't just have a blank page on startup
     updateWebpage(); 
+}
 
-    // email-related stuff
+bool initFinished = false;
+void ICACHE_FLASH_ATTR user_init2()
+{
+    // email-related stuff, only allowed to be initialised once sntp is up
     init_email();
 
-    // init stuff for the ook decoder
-    gpio_init();
-    gpio_intr_handler_register(ook_intr_handler, (void*) &unprocessedPackets);
-    init_ook_decoder();
-
     os_printf("init finished!\r\n");
-    initFinished = true;
 }
 
 
@@ -122,12 +121,6 @@ char generatedWebpage[WEBPAGE_SIZE];
 // called when the "clear" button is pressed on webpage
 void clearTriggeredSensors()
 {
-    int i;
-    for(i = 0; i<triggeredSensorsIter; i++)
-    {
-        os_free(triggeredSensorsNames[i]);
-        os_free(triggeredSensorsTimestamps[i]);
-    }
     triggeredSensorsIter = 0;
     //set_webpage(NULL);
     updateWebpage();
@@ -185,6 +178,10 @@ void updateWebpage()
     os_sprintf(generatedWebpage, 
         "%s\n<form action=\"disarm\"><input type=\"submit\" value=\"Disarm Alarm\"></form>", 
         generatedWebpage);
+    // time page was last updated
+    os_sprintf(generatedWebpage, 
+        "%s\n<br>\nLast updated at: %s\n",
+        generatedWebpage, sntp_get_real_time(sntp_get_current_timestamp()));
 
     set_webpage(generatedWebpage);
 }

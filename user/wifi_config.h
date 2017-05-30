@@ -1,2 +1,2 @@
-#define WIFI_SSID none
-#define WIFI_PSK  none
+#define WIFI_SSID "your_ssid"
+#define WIFI_PSK  "your_password"

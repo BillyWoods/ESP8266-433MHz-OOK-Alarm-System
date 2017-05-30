@@ -1,11 +1,11 @@
 #ifndef _EMAIL_H
 #define _EMAIL_H
 
-#define EMAIL_SEND_TO "recipient@example.com"
-#define EMAIL_ADDRESS "sending_account@gmail.com"
+#define EMAIL_SEND_TO "sender@gmail.com"
+#define EMAIL_ADDRESS "recipient@gmail.com"
 #define EMAIL_SENDER "ESP8266 alarm"
 // auth string generated in python via base64.b64encode(b"\000<email_address>\000<email_password>")
-#define EMAIL_AUTH_STRING "sdfseaERQQFDDSE="
+#define EMAIL_AUTH_STRING ""
 #define EMAIL_SERVER "smtp.gmail.com"
 #define EMAIL_PORT 465
 #define EMAIL_TIMEOUT 20

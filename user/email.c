@@ -28,6 +28,7 @@ bool is_email_timed_out()
 #endif
     return sntp_get_current_timestamp() - timeOfLastReceive > EMAIL_TIMEOUT;
 }
+
 void increment_SMTP_status()
 {
     currentSMTPStatus+=1;
