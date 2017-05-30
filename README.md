@@ -2,7 +2,8 @@ A program for the ESP8266 which lets it read from a 433mhz OOK (on-off keying)
 radio receiver. This has been extended to have the ESP8266 recognise sensors 
 from the ID they broadcast and serve a webpage showing which have been detected.
 It also sends out email alerts when sensors are triggered while the alarm is 
-"armed".
+"armed". The alarm can be armed and disarmed either thorugh the web interface or
+through a wireless key fob.
 
 See more at: http://billysprojects.blogspot.com.au/2016/04/combining-esp8266-wifi-module-with.html
    and also: http://billysprojects.blogspot.com.au/2017/05/the-esp8266-alarm-can-now-send-emails.html
@@ -18,7 +19,7 @@ you'll have to put your own WiFi credentials into user/wifi_config.h .
 For details on the build environment/SDK: https://github.com/esp8266/esp8266-wiki/wiki/Toolchain
 For a quick setup of the environment:     https://github.com/pfalcon/esp-open-sdk
 
-![ESP8266](https://3.bp.blogspot.com/-dE7WjOzv1cs/VwY4SQu82lI/AAAAAAAAAZc/H-UoFv7PiBwHAU1FsUp97-En4VSBJ8Urw/s320/IMG_1321.JPG)
+![ESP8266](https://3.bp.blogspot.com/-UnC8dADr9M0/WRw6J_3jrKI/AAAAAAAAAts/SxtiTdGjlSgliBR_OnRYi6-r0jheWI7ugCLcB/s400/DSC_0025.JPG)
 
 ![Example Sensor](https://3.bp.blogspot.com/-X3tzRxuR268/VwY4ft80KPI/AAAAAAAAAZs/2E7DH_TVJM02qMYSRgKdYn7zI_TKqltZA/s320/IMG_1372.JPG)
 
