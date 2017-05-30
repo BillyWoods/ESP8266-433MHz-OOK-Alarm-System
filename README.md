@@ -1,8 +1,11 @@
 A program for the ESP8266 which lets it read from a 433mhz OOK (on-off keying) 
 radio receiver. This has been extended to have the ESP8266 recognise sensors 
 from the ID they broadcast and serve a webpage showing which have been detected.
+It also sends out email alerts when sensors are triggered while the alarm is 
+"armed".
 
 See more at: http://billysprojects.blogspot.com.au/2016/04/combining-esp8266-wifi-module-with.html
+   and also: http://billysprojects.blogspot.com.au/2017/05/the-esp8266-alarm-can-now-send-emails.html
 
 If you want to use this code, go ahead. I'll license my code (under user/) as CC BY.
 However, the Makefile is the work of: zarya, Jeroen Domburg (Sprite_tm), 
@@ -21,4 +24,4 @@ For a quick setup of the environment:     https://github.com/pfalcon/esp-open-sd
 
 ![SDR analysis](https://2.bp.blogspot.com/-mxK08ZOS45w/VwY4iWwRy5I/AAAAAAAAAZ8/tFiu94m3OokjNhL08Jq6MyqATq4yWVKHg/s640/sdr%2B433.jpg)
 
-![Screenshot of Web Interface](https://4.bp.blogspot.com/-XhkqQwq13jU/VwY4gGkw5rI/AAAAAAAAAZ0/XhWVs8qngYgcLSzh06mxHX5qbICpSsDbA/s320/Screenshot%2B%25282%2529.png)
+![Screenshot of Web Interface](https://1.bp.blogspot.com/-_u8JuiHXa0Q/WS1XMfgPvKI/AAAAAAAAAus/9qquS1aSsF4wkIyNPq8FN1voG9WEIpq1QCLcB/s320/ss2.png)
